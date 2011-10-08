@@ -70,6 +70,7 @@ mds.prototype = {
 /* --------------------- START LIBRARY UTILITIES FUNCTIONS ------------------- */
 
 
+
 /*
 	mds.ajax({
 		url: "xhr/file.php",
@@ -86,7 +87,8 @@ mds.ajax = function(options){
 		type: options.type || "GET",
 		timeout: options.timeout || 8000,
 		success: options.success || function(){},
-		error: options.error || function(){}
+		error: options.error || function(){},
+		data: options.data || {}
 	};//close options object
 	
 	setTimeout(function(){
@@ -116,11 +118,20 @@ mds.ajax = function(options){
 	};//close parse data function
 	
 	var serialize = function(){
+		var ser = [];
+		
+		for (var key in options.data){
+			ser.push( key + "=" + encodeURIComponent(options.data[key]) );
+			// variable=content
+		};//close for loop
+		
+		return "?" + ser.join("&");
 		
 	};//close serialize function
 		
 	var xhr = new XMLHttpRequest();
-	xhr.open(options.type, options.url, true);
+	
+	xhr.open(options.type, options.url + serialize(), true);
 	
 	xhr.onreadystatechange = function(){
 		if ( xhr.readyState === 4){
