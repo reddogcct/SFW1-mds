@@ -66,4 +66,109 @@ mds.prototype = {
 	
 };//close mds prototype
 
+
+/* --------------------- START LIBRARY UTILITIES FUNCTIONS ------------------- */
+
+
+/*
+	mds.ajax({
+		url: "xhr/file.php",
+		type: "GET",
+		success: function(response){},
+		error: function(response){},
+		timeout: 800
+	});//close mds ajax object
+*/
+mds.ajax = function(options){
+
+	options = {
+		url: options.url || "",
+		type: options.type || "GET",
+		timeout: options.timeout || 8000,
+		success: options.success || function(){},
+		error: options.error || function(){}
+	};//close options object
+	
+	setTimeout(function(){
+		if(xhr){
+			xhr.abort();
+		};//close if statement
+	}, options.timeout);//close set timeout function
+	
+	var checkHttp = function(){
+		try{
+			return 	!xhr.status && location.protocol === "file:" || 
+					( xhr.status >= 200 && xhr.status <= 300 ) ||
+					xhr.status === 304 ||
+					navigator.userAgent.indexOf("Safari") >= 0 && xhr.status === "undefined"
+			;//close return statement
+		}catch(err){ };
+		
+		return false;
+	};//close check HTTP function
+		
+	var parseData = function(){
+		var ct = xhr.getResponseHeader("content-type");
+		var isxml = ct && ct.indexOf("xml") >= 0;
+		
+		//if true return xhr.responseXMl if its false return xhr.responseTextx
+		return isxml ? xhr.responseXML : xhr.responseText;
+	};//close parse data function
+	
+	var serialize = function(){
+		
+	};//close serialize function
+		
+	var xhr = new XMLHttpRequest();
+	xhr.open(options.type, options.url, true);
+	
+	xhr.onreadystatechange = function(){
+		if ( xhr.readyState === 4){
+			var valid = checkHttp();
+			
+			if ( valid ){
+				//success
+				var response = parseData();
+				options.success( response );
+			}else{
+				//error
+				options.error(xhr);
+			};//close if/else statement
+			
+			xhr = undefined;//destroy xhr so that it prevents memory leak
+		};//close if statement
+	};//close on ready state change function
+	
+	//all browsers request undefined to be sent, and only firefox requires null. Since null is undefined in JS then we can use null, which is undefined also
+	xhr.send(null);
+
+};//close mds ajax function
+
+
+
+
+
+/* --------------------- END LIBRARY UTILITIES FUNCTIONS ------------------- */
+
+
 mds.prototype.init.prototype = mds.prototype;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
