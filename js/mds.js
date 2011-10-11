@@ -4,72 +4,106 @@
 
 var mds = function(selector){
 	return new mds.prototype.init(selector);
-};//close mds function
+};
 
 mds.prototype = {
 
 	init: function(selector){
-		//init the library
+		// init the library
 		if(typeof selector === "string"){
 			this.elements = document.querySelectorAll(selector);
 		}else if(selector.nodeType){
 			this.elements = [selector];
-		};//close if statement typeof
-	},//close init function
-	
+		};
+
+	},
+
 	elements: [],
-	
+
 	each: function(fn){
 		for(var i=0, j=this.elements.length; i<j; i++){
-			//this method calls our function but it changes the this. of the function to this.elements[i];
 			fn.call(this.elements[i]);
-		};//close for loop
-		
+		};
 		return this;
-	},//close each function
-	
+	},
+
 	css: function(props){
 		for(var prop in props){
 			this.each(function(){
 				this.style[prop] = props[prop];
-			});//close this.each function
-		};//close for loop
-	},//close css function
-	
+			});
+		};
+		return this;
+	},
+
 	hasClass: function(name){
 		var hasit = false;
-		
 		this.each(function(){
-			var pattern = new RegExp("(^| )" + name + "( |$)");
+			var pattern = new RegExp("(^| )" + name + "( |$)");  
 			if( pattern.test(this.className) ){
 				hasit = true;
-			};//close if statement
-		});//close each function
-		
+			};  
+		});
 		return hasit;
-	},//close has class function
-	
+	},
+
 	addClass: function(name){
 		this.each(function(){
 			if( !mds(this).hasClass(name) ){
-				this.className += " "+ name;
-			};//close if !mds(this) statement
-		});//close each function
-	},//close add class function
-	
+				this.className += " " + name;
+			};
+		});
+		return this;
+	},
+
 	removeClass: function(name){
 		this.each(function(){
 			var pattern = new RegExp("(^| )" + name + "( |$)");
-			this.className = this.className.replace(pattern , "$1").replace(/ $/ , "");
-		});//close each function
-	}//close remove class function
-	
-};//close mds prototype
+			this.className = this.className.replace(pattern, "$1").replace(/ $/, "");   
+		});
+		return this;
+	},
 
+	getStyle: function(prop){
+		var elem  = this.elements[0];
 
-/* --------------------- START LIBRARY UTILITIES FUNCTIONS ------------------- */
+		if( elem.style[prop] ){
+			return elem.style[prop];
+		}else if( elem.currentStyle ){
+			return elem.currentStyle[prop];
+		}else{
+			prop = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+			return document.defaultView.getComputedStyle(elem, "").getPropertyValue(prop); 
+		};
+	},
 
+	hide: function(){
+		this.each(function(){
+			this.style.display = "none";
+		});
+		return this;
+	},
 
+	show: function(){
+		this.each(function(){
+			this.style.display = "";
+		});
+		return this;
+	},
+
+	// mds("thing").elements[0].onclick = function(){}
+	// mds("thing").on("keyup", function(){})
+
+	on: function(evt, handler){
+		this.each(function(){
+			this["on" + evt] = handler;
+		});
+		return this;
+	}
+
+};
+
+// library utility functions (non-DOM)
 
 /*
 	mds.ajax({
@@ -77,8 +111,16 @@ mds.prototype = {
 		type: "GET",
 		success: function(response){},
 		error: function(response){},
-		timeout: 800
-	});//close mds ajax object
+		timeout: 8000
+	});
+	
+	mds.ajax({
+		url: "xhr/file.php",
+		success: function(response){}
+	});
+	
+	LECTURE RESUMES AT 4:45pm
+	=====================================
 */
 mds.ajax = function(options){
 
@@ -89,97 +131,70 @@ mds.ajax = function(options){
 		success: options.success || function(){},
 		error: options.error || function(){},
 		data: options.data || {}
-	};//close options object
-	
+	};
+
 	setTimeout(function(){
 		if(xhr){
 			xhr.abort();
-		};//close if statement
-	}, options.timeout);//close set timeout function
-	
+		}
+	}, options.timeout);
+
 	var checkHttp = function(){
 		try{
-			return 	!xhr.status && location.protocol === "file:" || 
-					( xhr.status >= 200 && xhr.status <= 300 ) ||
-					xhr.status === 304 ||
-					navigator.userAgent.indexOf("Safari") >= 0 && xhr.status === "undefined"
-			;//close return statement
-		}catch(err){ };
-		
+			return !xhr.status && location.protocol === "file:" ||
+				( xhr.status >= 200 && xhr.status < 300 ) ||
+				xhr.status === 304 ||
+				navigator.userAgent.indexOf("Safari") >= 0 && xhr.status === "undefined"
+			;
+		}catch(err){};
+
 		return false;
-	};//close check HTTP function
-		
+	};
+
 	var parseData = function(){
+
 		var ct = xhr.getResponseHeader("content-type");
 		var isxml = ct && ct.indexOf("xml") >= 0;
-		
-		//if true return xhr.responseXMl if its false return xhr.responseTextx
 		return isxml ? xhr.responseXML : xhr.responseText;
-	};//close parse data function
-	
+
+	};
+
 	var serialize = function(){
 		var ser = [];
-		
-		for (var key in options.data){
+		for(var key in options.data){
 			ser.push( key + "=" + encodeURIComponent(options.data[key]) );
-			// variable=content
-		};//close for loop
-		
+		};
 		return "?" + ser.join("&");
-		
-	};//close serialize function
-		
+	};
+
 	var xhr = new XMLHttpRequest();
-	
+
 	xhr.open(options.type, options.url + serialize(), true);
-	
+
 	xhr.onreadystatechange = function(){
-		if ( xhr.readyState === 4){
+		if(xhr.readyState === 4){
+
 			var valid = checkHttp();
-			
-			if ( valid ){
-				//success
+
+			if(valid){
+				// success
 				var response = parseData();
 				options.success( response );
 			}else{
-				//error
+				// fail
 				options.error(xhr);
-			};//close if/else statement
-			
-			xhr = undefined;//destroy xhr so that it prevents memory leak
-		};//close if statement
-	};//close on ready state change function
-	
-	//all browsers request undefined to be sent, and only firefox requires null. Since null is undefined in JS then we can use null, which is undefined also
+			};
+
+			xhr = undefined;
+		};
+	};
+
 	xhr.send(null);
 
-};//close mds ajax function
+};
 
-
-
-
-
-/* --------------------- END LIBRARY UTILITIES FUNCTIONS ------------------- */
 
 
 mds.prototype.init.prototype = mds.prototype;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// end of library
